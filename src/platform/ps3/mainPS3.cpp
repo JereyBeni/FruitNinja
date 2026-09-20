@@ -1,40 +1,62 @@
 // PS3 entry point (PSL1GHT).
-// Scaffolding only -- real RSX / pad / audio / fixed-step loop still TODO.
-// Pattern follows mainWii.cpp / mainSDL.cpp: init platform, then run the
-// shared game fixed-step driver.
+// Scaffolding: pad init + fixed-step placeholder loop.
+// RSX / display / audio / full game glue still TODO.
+
+#ifdef FRUIT_PLATFORM_PS3
+
+#include "platform/ps3/InputTranslatorPS3.h"
 
 #include <stdio.h>
 #include <unistd.h>
+#include <sys/process.h>
+#include <sysutil/sysutil.h>
 
-// PSL1GHT headers will go here once we start real init:
-// #include <sys/process.h>
-// #include <sysutil/sysutil.h>
-// #include <io/pad.h>
-// #include <rsx/rsx.h>
-// etc.
+// PSL1GHT pad already pulled by the translator; keep a local instance here
+// until the real game loop owns it.
+static InputTranslatorPS3 g_input;
 
-// Game / engine entry points (shared across platforms).
-// These will be wired once the rest of the PS3 backend exists.
-// extern int GameMain(...);
+static void sysutil_callback(u64 status, u64 param, void* userdata)
+{
+    (void)param;
+    (void)userdata;
+    if (status == SYSUTIL_EXIT_GAME) {
+        // Clean shutdown path when the user quits from XMB.
+        g_input.ReleaseAllFingers();
+        sysProcessExit(0);
+    }
+}
 
 int main(int argc, char* argv[])
 {
     (void)argc;
     (void)argv;
 
-    printf("Fruit Ninja PS3 -- scaffolding build\n");
-    printf("Real init (RSX, pad, audio, fixed-step loop) still TODO.\n");
+    printf("Fruit Ninja PS3 -- input scaffold\n");
 
-    // TODO:
-    // 1. sysModuleLoad / RSX init / display setup
-    // 2. pad init
-    // 3. filesystem (cellFs or hostfs for RPCS3)
-    // 4. sound
-    // 5. FixedStepDriver + game loop (same 60 Hz tick as other platforms)
-    // 6. clean shutdown on quit / XMB exit
+    sysUtilRegisterCallback(0, sysutil_callback, NULL);
 
-    // Keep the process alive briefly so RPCS3 / hardware shows something.
-    sleep(3);
+    g_input.Init();
+    // Motion mode ON by default (same spirit as desktop / Magic Remote).
+    g_input.SetMotionMode(true);
 
+    // Placeholder loop: poll pad, drain touch, sleep ~16 ms.
+    // Replace with FixedStepDriver + RSX present once display is wired.
+    for (int frame = 0; frame < 60 * 5; ++frame) {  // ~5 s then exit for now
+        sysUtilCheckCallback();
+
+        g_input.Poll();
+        g_input.DispatchForSimTick();
+
+        // TODO: game step + RSX flip
+        usleep(16000);
+    }
+
+    g_input.ReleaseAllFingers();
+    printf("Fruit Ninja PS3 -- scaffold exit\n");
     return 0;
 }
+
+#else
+// Should never be compiled without FRUIT_PLATFORM_PS3.
+int main() { return 1; }
+#endif

@@ -1,60 +1,55 @@
 # PS3 port (PSL1GHT / RSX)
 
-Status: **scaffolding only**. Compiles/links are not yet validated.
-`-DFRUIT_PLATFORM_PS3=ON` + `cmake/ps3.toolchain.cmake`. Every other build
-(host/web/webOS/Wii/asm-verify) is unaffected when this option is OFF.
+Status: **scaffolding + DualShock 3 input**. Compiles/links not yet validated
+on hardware/RPCS3. `-DFRUIT_PLATFORM_PS3=ON` + `cmake/ps3.toolchain.cmake`.
+Every other build is unaffected when this option is OFF.
+
+## Input (live in this scaffold)
+
+| Control | Action |
+|---|---|
+| Left stick | Aim blade / pointer |
+| Cross (X) or R2 | Cut / click |
+| Motion mode ON (default) | Blade follows stick continuously; Cross is menu-click only (speed-gated slice) |
+| Motion mode OFF | Hold Cross + move stick to cut |
+
+Up to 4 pads. Same two-role channel model as Wii/SDL (`Mortar::Touch`).
+Sixaxis sensors are enabled; tilt-aim can be wired later.
+
+Implementation: `InputTranslatorPS3.{h,cpp}` via PSL1GHT `ioPad`.
 
 ## Goal
 
-Faithful C++11 port of Fruit Ninja Bada 1.6.1 running as PSL1GHT homebrew on
-real PS3 hardware and RPCS3. Same philosophy as the Wii port: keep the engine
-mostly untouched and put platform differences behind thin seams.
+Faithful C++11 port of Fruit Ninja Bada 1.6.1 as PSL1GHT homebrew on real PS3
+and RPCS3.
 
 ## Approach (planned)
 
-| Concern | Planned location | Notes |
+| Concern | Location | State |
 |---|---|---|
-| Entry + loop | `mainPS3.cpp` | PSL1GHT init, fixed-step loop |
-| Video / RSX | TBD (`DisplayManagerPS3` or GL-on-RSX shim) | RSX via `rsx` / `gcm` |
-| Input | `InputTranslatorPS3.{h,cpp}` | Pad (Sixaxis) + optional Move |
-| Audio | `SoundManagerPS3` | libaudio / spu or simple mix |
-| Filesystem | `FileSystemPS3` | cellFs / hostfs for RPCS3 |
-| Endian | already handled via `FN_BIG_ENDIAN` | Cell PPU is big-endian |
+| Entry + loop | `mainPS3.cpp` | stub loop + pad poll |
+| Input | `InputTranslatorPS3` | **real** DualShock 3 |
+| Video / RSX | TBD | TODO |
+| Audio | TBD | TODO |
+| Filesystem | TBD | TODO |
+| Endian | `FN_BIG_ENDIAN` | Cell PPU is big-endian |
 
 ## Build
 
 ```sh
-# Env (once)
-export PS3DEV=/usr/local/ps3dev          # or your prefix
+export PS3DEV=/usr/local/ps3dev
 export PSL1GHT=$PS3DEV/psl1ght
 export PATH=$PS3DEV/bin:$PS3DEV/ppu/bin:$PATH
 
-# Configure + build
-cmake -B build/ps3 -G "Unix Makefiles" \
-  -DCMAKE_TOOLCHAIN_FILE=cmake/ps3.toolchain.cmake \
-  -DFRUIT_PLATFORM_PS3=ON
-cmake --build build/ps3 -j$(nproc)
-```
-
-Or use the helper:
-
-```sh
 bash tools/ps3/build.sh
 ```
 
-Output will eventually be a `.self` / `.pkg` suitable for RPCS3 or a CFW PS3.
-
-## State / remaining
+## Remaining
 
 - [x] CMake option + toolchain file
-- [x] Platform directory + stubs
-- [ ] `mainPS3.cpp` real entry + fixed-step loop
+- [x] Platform directory + DualShock 3 input
+- [ ] Wire `FRUIT_PLATFORM_PS3` fully in root `CMakeLists.txt` (executable + defs)
 - [ ] RSX / display path
-- [ ] Pad input translator
 - [ ] Audio backend
-- [ ] Asset staging for PS3 (raw Tex1 like Wii, or compressed)
-- [ ] `.self` / package generation
+- [ ] Asset staging + `.self` / `.pkg`
 - [ ] RPCS3 + real hardware validation
-
-See also the Wii README (`src/platform/wii/README.md`) for patterns we will
-reuse (endian gates, block-preload, GL shim idea, etc.).
