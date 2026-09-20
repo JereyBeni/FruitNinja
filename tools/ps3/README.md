@@ -4,10 +4,25 @@
 
 | File | Script | What |
 |---|---|---|
-| `TestBuildFruitNinja1.0.pkg` | `package.sh` | Executable (EBOOT + SFO) |
-| `FruitNinjaNECESARRYAssets.PKG` | `package-assets.sh` | Game data only |
+| `TestBuildFruitNinja1.0.pkg` | `package.sh` / `build.sh pkg` | Executable |
+| `FruitNinjaNECESARRYAssets.PKG` | `package-assets.sh` | Data base |
+| `FruitNinjaDLC_Skittles.pkg` | `package-dlc.sh skittles` | DLC Skittles |
+| `FruitNinjaDLC_PussInBoots.pkg` | `package-dlc.sh puss` | DLC Gato con Botas |
 
-## Build executable PKG
+## DLC (Skittles / Gato con Botas)
+
+Mismo EBOOT. Cada DLC es un **content pack** de data:
+
+```bash
+# 1. Tirás tus assets en packs/skittles/Data/  (layout tipo FruitNinjaBada/Data)
+# 2. Empaquetás
+bash tools/ps3/package-dlc.sh skittles
+bash tools/ps3/package-dlc.sh puss
+```
+
+Detalle: `src/platform/ps3/dlc/README.md` y `packs/*/dlc.json`.
+
+## Build ejecutable
 
 ```bash
 export PS3DEV=/usr/local/ps3dev
@@ -15,35 +30,22 @@ export PSL1GHT=$PS3DEV/psl1ght
 export PATH=$PS3DEV/bin:$PS3DEV/ppu/bin:$PATH
 
 bash tools/ps3/build.sh pkg
-# -> build/ps3/TestBuildFruitNinja1.0.pkg
 ```
 
-## Build assets PKG (Bada or Android dump)
-
-The port expects **Bada-style** `Data/` (Tex1 textures, etc.).  
-If you extracted an **Android** APK/OBB, put the files in a folder that matches that layout (or convert first with `tools/assets/`).
+## Assets base
 
 ```bash
-# Default: FruitNinjaBada/Data in the repo
 bash tools/ps3/package-assets.sh
-
-# Or Android / custom extract
-bash tools/ps3/package-assets.sh /path/to/AndroidExtract/Data
-# or
-export FN_ANDROID_DATA=/path/to/AndroidExtract/Data
-bash tools/ps3/package-assets.sh
-
-# -> build/ps3/FruitNinjaNECESARRYAssets.PKG
+# o desde Android extract:
+bash tools/ps3/package-assets.sh /path/to/Data
 ```
 
-## Install (CFW / RPCS3)
+## Orden de install (CFW / RPCS3)
 
-1. Install **FruitNinjaNECESARRYAssets.PKG** first (data).
-2. Install **TestBuildFruitNinja1.0.pkg** (code).
-
-Assets APPID: `FNASSET01` → data under that title’s `USRDIR/Data`.  
-You can also copy `Data/` into the main app’s `USRDIR` after install.
+1. `FruitNinjaNECESARRYAssets.PKG`
+2. `TestBuildFruitNinja1.0.pkg`
+3. (opcional) `FruitNinjaDLC_Skittles.pkg` / `FruitNinjaDLC_PussInBoots.pkg`
 
 ## Legal
 
-You need your **own** copy of the game data. This only packages files you provide; it does not ship Halfbrick assets.
+Solo empaquetás data que **vos** aportás. No se redistribuyen assets de Halfbrick / Mars / DreamWorks.
