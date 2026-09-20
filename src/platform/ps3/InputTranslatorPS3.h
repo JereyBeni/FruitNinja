@@ -4,27 +4,24 @@
 //
 // InputTranslatorPS3 -- DualShock 3 / Sixaxis (PSL1GHT ioPad) -> Mortar::Touch.
 //
-// Mirrors the two-role model used by InputTranslatorWii / InputTranslatorSDL:
+// Player-requested mapping:
 //
-//   Role 1 -- "press finger" (channels 0..3, one per pad):
-//     Active while Cross OR R2 is held. Feeds Mortar::Touch so menus/widgets
-//     receive real clicks in BOTH modes. When motion mode is OFF this is also
-//     the blade (press-to-cut). When motion mode is ON the slice is speed-gated
-//     (same as Wii Role 1).
+//   LEFT  STICK  -> blade / cut aim (where you slash)
+//   CROSS (X)    -> cut button (hold to slash, or click while aiming)
+//   RIGHT STICK  -> UI pointer for menus / buttons / shop
 //
-//   Role 2 -- "hover blade" (channels 12..15):
-//     Live only while FN::g_MotionMode is ON and the cut button is NOT held.
-//     Blade tracks the left stick continuously; cuts are speed-gated by
-//     SlashEntity. Pressing Cross/R2 lifts the hover blade (menu click rides
-//     Role 1 instead) so there is never a double blade.
+// Channel model (same 16-channel space as SDL / Wii):
 //
-// Stick mapping:
-//   Left analog stick -> pointer position in normalized [0,1] screen space
-//   (centre = 0.5,0.5). Deadzone applied. Transformed via Layout::TouchToGame.
+//   Role BLADE (channels 0..3, one per pad):
+//     Driven by left stick + Cross.
+//     Motion mode OFF: press Cross + move left stick = cut.
+//     Motion mode ON:  blade follows left stick continuously; Cross is the
+//                      explicit cut / speed is still gated by SlashEntity.
 //
-// Sixaxis tilt is read (sensor mode ON) and available for a future motion
-// aim assist; the primary aim is always the left stick for predictable play
-// on RPCS3 and real hardware.
+//   Role UI (channels 12..15):
+//     Driven by right stick. Always a normal press finger so widgets,
+//     scrollers and menu buttons receive clicks. Independent of the blade
+//     so you can aim and navigate UI without fighting the same stick.
 //
 // Only compiled when FRUIT_PLATFORM_PS3 is set.
 
@@ -34,29 +31,18 @@
 
 class InputTranslatorPS3 {
 public:
-    static const int MAX_PADS      = 4;   // practical multiplayer ceiling
-    static const int CHANNEL_COUNT = 16;  // same space as SDL / Wii
+    static const int MAX_PADS      = 4;
+    static const int CHANNEL_COUNT = 16;
 
-    // Hover blade channels (same numbers as Wii pointer channels).
-    static const int HOVER_CHANNEL_FIRST = 12;
+    // UI pointer channels (right stick) -- same range as Wii hover channels.
+    static const int UI_CHANNEL_FIRST = 12;
 
     InputTranslatorPS3();
 
-    // ioPadInit + enable sensors on connected ports. Call once at boot.
     void Init();
-
-    // Poll all pads, push Role 1 / Role 2 into Mortar::Touch.
-    // Call once per display frame from the main loop.
     void Poll();
-
-    // Drain Mortar::Touch for one sim tick. Call before Game::stepUpdate().
     void DispatchForSimTick();
-
-    // Release every held channel (suspend / XMB exit).
     void ReleaseAllFingers();
-
-    // Optional: force motion mode from platform code (Settings also writes
-    // FN::g_MotionMode directly).
     void SetMotionMode(bool enabled);
 
 private:
@@ -64,20 +50,26 @@ private:
     float fingerY[CHANNEL_COUNT];
     bool  fingerActive[CHANNEL_COUNT];
 
-    bool  prevCutHeld[MAX_PADS];
+    bool  prevCrossHeld[MAX_PADS];
     bool  padPresent[MAX_PADS];
 
-    // Last aim position per pad (game-space), for GetPointer-style overlays later.
-    float m_AimGX[MAX_PADS];
-    float m_AimGY[MAX_PADS];
-    bool  m_AimValid[MAX_PADS];
+    // Last aim positions (game-space) for optional on-screen cursors later.
+    float m_BladeGX[MAX_PADS];
+    float m_BladeGY[MAX_PADS];
+    float m_UiGX[MAX_PADS];
+    float m_UiGY[MAX_PADS];
+    bool  m_BladeValid[MAX_PADS];
+    bool  m_UiValid[MAX_PADS];
 
     bool motionModeWasOn_;
 
-    void TransformStickNormalized(float nx, float ny, float& gx, float& gy);
+    void TransformNormalized(float nx, float ny, float& gx, float& gy);
     void PointerPressChannel(int ch, float gx, float gy);
     void PointerReleaseChannel(int ch);
-    void DrainPad(int port, float nx, float ny, bool cutHeld, bool connected);
+    void PointerMoveChannel(int ch, float gx, float gy);
+
+    void DrainBlade(int port, float nx, float ny, bool crossHeld, bool connected);
+    void DrainUI(int port, float nx, float ny, bool connected);
 };
 
 #endif // FRUIT_PLATFORM_PS3

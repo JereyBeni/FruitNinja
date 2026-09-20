@@ -4,17 +4,22 @@ Status: **scaffolding + DualShock 3 input**. Compiles/links not yet validated
 on hardware/RPCS3. `-DFRUIT_PLATFORM_PS3=ON` + `cmake/ps3.toolchain.cmake`.
 Every other build is unaffected when this option is OFF.
 
-## Input (live in this scaffold)
+## Input mapping (player request)
 
 | Control | Action |
 |---|---|
-| Left stick | Aim blade / pointer |
-| Cross (X) or R2 | Cut / click |
-| Motion mode ON (default) | Blade follows stick continuously; Cross is menu-click only (speed-gated slice) |
-| Motion mode OFF | Hold Cross + move stick to cut |
+| **Left stick** | Blade / cut aim |
+| **Cross (X)** | Cut button |
+| **Right stick** | UI pointer (menus, buttons, shop) |
 
-Up to 4 pads. Same two-role channel model as Wii/SDL (`Mortar::Touch`).
-Sixaxis sensors are enabled; tilt-aim can be wired later.
+### Modes
+
+- **Motion mode ON** (default): left stick moves the blade continuously; fast movement slices (speed gate). Cross can still be used as an explicit cut edge.
+- **Motion mode OFF**: hold Cross + move left stick to cut.
+
+Right stick is always the separate UI finger so you never fight the blade stick for menus.
+
+Up to 4 pads. Channels feed `Mortar::Touch` the same way as Wii/SDL.
 
 Implementation: `InputTranslatorPS3.{h,cpp}` via PSL1GHT `ioPad`.
 
@@ -28,7 +33,7 @@ and RPCS3.
 | Concern | Location | State |
 |---|---|---|
 | Entry + loop | `mainPS3.cpp` | stub loop + pad poll |
-| Input | `InputTranslatorPS3` | **real** DualShock 3 |
+| Input | `InputTranslatorPS3` | **real** DualShock 3 (this mapping) |
 | Video / RSX | TBD | TODO |
 | Audio | TBD | TODO |
 | Filesystem | TBD | TODO |
@@ -47,8 +52,8 @@ bash tools/ps3/build.sh
 ## Remaining
 
 - [x] CMake option + toolchain file
-- [x] Platform directory + DualShock 3 input
-- [ ] Wire `FRUIT_PLATFORM_PS3` fully in root `CMakeLists.txt` (executable + defs)
+- [x] Platform directory + DualShock 3 input (left=blade, X=cut, right=UI)
+- [ ] Wire `FRUIT_PLATFORM_PS3` fully in root `CMakeLists.txt`
 - [ ] RSX / display path
 - [ ] Audio backend
 - [ ] Asset staging + `.self` / `.pkg`
