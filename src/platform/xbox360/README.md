@@ -1,53 +1,25 @@
-# Xbox 360 platform backend
+# Xbox 360 platform bring-up
 
-Target: modified Xbox 360 consoles running RGH or JTAG. Retail consoles are
-outside this port's scope.
+This target is an early native Xenos rendering probe for the modified-console port. It is built as an unsigned XEX with the public xenosworks/xsdk toolchain and is intended for RGH/JTAG hardware.
 
-## Current stage: display and controller bring-up
+## What this target currently does
 
-This directory is currently a standalone XSDK title, not yet the complete
-Fruit Ninja game port. It checks the first pieces of the platform layer:
+- Opens the Xenos GPU and the 720p presentation path.
+- Compiles the GLSL vertex and fragment shaders with `xsdk_add_shaders`.
+- Uploads a three-vertex buffer to GPU memory.
+- Draws a coloured triangle through `xsdk_gpu_*` and presents each frame.
+- Reads the Back button through XAM and shuts down its GPU resources.
 
-- XEX creation through `xsdk_add_xex`.
-- XSDK GPU ownership and 720p presentation.
-- Frame submission and a solid-colour clear.
-- Controller polling through `XamInputGetState`; Back exits.
-
-The title uses XSDK's native Xenos GPU interface. It does not include
-Windows `d3d9.h`, call `IDirect3DDevice9`, or depend on Microsoft's
-Xbox 360 XDK. XSDK exposes its own API in `xsdk/gpu.h` and supports
-Shader Model 3 HLSL and GLSL shader compilation.
+This is a renderer bring-up test, not the complete Fruit Ninja game renderer. It does not yet connect Mortar's texture, mesh, UI, audio, filesystem, or save interfaces.
 
 ## Build
 
-Build XSDK first, following its `docs/GETTING_STARTED.md`, so
-`build/libxsdk.a`, the PowerPC toolchain and shader tools are available.
-
-Then configure this directory as its own CMake project:
+Build XSDK and its host shader compiler first. Then configure this directory with XSDK's toolchain file:
 
 ```sh
 cmake -S src/platform/xbox360 -B build/xbox360 -G Ninja \
-  -DCMAKE_TOOLCHAIN_FILE="$HOME/xsdk/cmake/xsdk.cmake" \
-  -DXSDK_TOOLCHAIN="$HOME/xsdk-gcc"
+  -DCMAKE_TOOLCHAIN_FILE=/path/to/xsdk/cmake/xsdk.cmake
 cmake --build build/xbox360
 ```
 
-The expected output is
-`build/xbox360/fruit-ninja-xbox360.xex`.
-
-This stage has not yet been built or tested on a console. Use an XSDK-supported
-RGH/JTAG development setup for hardware validation.
-
-## Next integration stages
-
-1. Add the Xbox 360 platform option to the main Fruit Ninja CMake build.
-2. Implement the game entry point, fixed-step loop and XAM controller input.
-3. Port file access and save handling to XSDK paths and XAM saves.
-4. Port audio to `xsdk_audio_*` or an XSDK-compatible audio layer.
-5. Implement the renderer against XSDK's Xenos GPU API and adapt the game's
-   GLSL shaders. The existing Wii GX renderer is not reusable on Xenos.
-6. Validate asset byte order, texture formats, memory use and frame pacing
-   on actual hardware.
-
-The current title is a platform smoke test only. It deliberately does not
-pretend that the game's renderer or engine is already running.
+The output is `build/xbox360/fruit-ninja-xbox360.xex`. Run it only on an RGH/JTAG console that can launch unsigned XEX titles.
