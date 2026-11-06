@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.25)
 project(FruitNinjaXbox360 C)
 
 if(NOT XSDK)
-    message(FATAL_ERROR "Configure this target with xenosworks/xsdk/cmake/xsdk.cmake")
+    message(FATAL_ERROR "Configure with xenosworks/xsdk/cmake/xsdk.cmake")
 endif()
 
 add_executable(fruit-ninja-xbox360 main.c)
@@ -13,6 +13,7 @@ set_target_properties(fruit-ninja-xbox360 PROPERTIES
 )
 target_compile_options(fruit-ninja-xbox360 PRIVATE -Wall -Wextra -Werror)
 
+xsdk_add_shaders(fruit-ninja-xbox360 triangle.vert triangle.frag)
 xsdk_add_xex(fruit-ninja-xbox360
     TITLE_ID 0x46524E58
     NAME "Fruit Ninja Xbox 360"
