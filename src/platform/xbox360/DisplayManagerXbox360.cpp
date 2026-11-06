@@ -50,7 +50,7 @@ namespace Mortar {
 
 void DisplayManager::SwapBuffers(void*)
 {
-    if (!fn::xbox360::CurrentFrameAddress()) return;
+    if (!s_frameReady) return;
 
     xsdk_gpu_resolve(
         fn::xbox360::CurrentFrameAddress(),
