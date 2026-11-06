@@ -71,16 +71,16 @@ int main(void)
 
     xsdk_log_write("FruitNinja360: Xenos renderer bring-up");
 
+    status = xsdk_splash_show(1000);
+    if (!NT_SUCCESS(status))
+        xsdk_log_write("FruitNinja360: splash unavailable: 0x%08X", (unsigned)status);
+
     status = xsdk_gpu_open();
     if (!NT_SUCCESS(status)) {
         xsdk_log_write("FruitNinja360: xsdk_gpu_open failed: 0x%08X", (unsigned)status);
         goto cleanup;
     }
     gpu_open = true;
-
-    status = xsdk_splash_show(1000);
-    if (!NT_SUCCESS(status))
-        xsdk_log_write("FruitNinja360: splash unavailable: 0x%08X", (unsigned)status);
 
     status = xsdk_shader_load(&vertex_shader, triangle_vert.container, triangle_vert.container_bytes);
     if (NT_SUCCESS(status))
